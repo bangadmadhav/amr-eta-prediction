@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'eta_predictor_node = eta_predictor.eta_predictor_node:main',
             'eta_comparison_node = eta_predictor.eta_comparison_node:main',
+            'eta_visualizer_node = eta_predictor.eta_visualizer_node:main',
         ],
     },
 )

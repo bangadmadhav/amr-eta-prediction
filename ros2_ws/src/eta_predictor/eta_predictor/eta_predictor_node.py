@@ -5,12 +5,14 @@ from rclpy.node import Node
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import Float32
+from action_msgs.msg import GoalStatusArray
 
 import numpy as np
 import pandas as pd
 import math
 import joblib
 import os
+import time
 from scipy.ndimage import distance_transform_edt
 from PIL import Image
 import yaml
@@ -138,15 +140,24 @@ class ETAPredictor(Node):
         # ---------------- FEATURES ----------------
         path_length, smoothness, turn_count = self.compute_path_features(msg)
         avg_clear, min_clear = self.compute_clearance(msg)
-        uncertainty = self.compute_uncertainty()
+        uncertainty_raw = self.compute_uncertainty()
+        log_uncertainty = math.log(uncertainty_raw + 1e-6)
+        clearance_ratio = min_clear / (avg_clear + 1e-6)
+        curvature = smoothness * turn_count
+
+        # Adding Clippings to handle
+        log_uncertainty = max(-5, min(-1, log_uncertainty))
+        clearance_ratio = min(clearance_ratio, 1.5)
 
         data = {
             "path_length": path_length,
             "smoothness": smoothness,
             "turn_count": turn_count,
-            "uncertainty_trace": uncertainty,
             "avg_clearance": avg_clear,
-            "min_clearance": min_clear
+            "min_clearance": min_clear,
+            "clearance_ratio": clearance_ratio,
+            "curvature": curvature,
+            "log_uncertainty": log_uncertainty
         }
 
         for f in self.feature_names:
@@ -175,7 +186,7 @@ class ETAPredictor(Node):
             f"ETA → {predicted_time:.2f}s | "
             f"len={path_length:.2f} | "
             f"clear={avg_clear:.2f}/{min_clear:.2f} | "
-            f"unc={uncertainty:.3f}"
+            f"unc={log_uncertainty:.3f}"
         )
 
     # =========================================================
