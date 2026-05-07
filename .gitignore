@@ -6,8 +6,10 @@ ros2_ws/data/
 .vscode/
 
 ros2_ws/src/nav_logger/datapoints
-data/dataset_A.csv
-data/dataset_B.csv
+ml/dataset_A.csv
+
+nav2_ml_env/
+
 
 devel/
 logs/
